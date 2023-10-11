@@ -1,7 +1,8 @@
+import random
 import torch
 from ogb.linkproppred import PygLinkPropPredDataset
 from ogb.nodeproppred import PygNodePropPredDataset
-from torch_geometric.datasets import Planetoid
+from torch_geometric.datasets import Planetoid, HeterophilousGraphDataset
 import torch_geometric.transforms as T
 from torch_sparse import SparseTensor
 
@@ -9,7 +10,6 @@ from torch_sparse import SparseTensor
 def load_cora():
     cora_dataset = Planetoid("/tmp/cora", name="cora", split="full")
     cora_data = cora_dataset[0]
-    cora_data
     # Get the edge indices and node features for our model. General set up variables for running with all the models
     edge_indices = cora_data.edge_index
     node_features = cora_data.x
@@ -77,11 +77,46 @@ def load_ogbl_citation2_sparse():
     return data.adj_t, node_features
 
 
+def load_roman_empire():
+    roman_empire_dataset = HeterophilousGraphDataset(root="", name="Roman-empire")
+    roman_empire_data = roman_empire_dataset[0]
+    # Get the edge indices and node features for our model. General set up variables for running with all the models
+    edge_indices = roman_empire_data.edge_index
+    node_features = roman_empire_data.x
+    neighbour_dataset = roman_empire_data
+
+    random_column_index = random.randint(0, 9)
+
+    # Get masks and training labels for each split
+    train_mask = roman_empire_data.train_mask[:, random_column_index]
+    train_y = roman_empire_data.y[train_mask]
+    valid_mask = roman_empire_data.val_mask[:, random_column_index]
+    valid_y = roman_empire_data.y[valid_mask]
+    test_mask = roman_empire_data.test_mask[:, random_column_index]
+    test_y = roman_empire_data.y[test_mask]
+
+    num_classes = 18
+
+    return node_features, num_classes, edge_indices, train_y, train_mask, valid_y, valid_mask, test_y, test_mask
+
+
+def load_roman_empire_sparse():
+    dataset = HeterophilousGraphDataset(
+        root="", name='roman-empire', transform=T.ToSparseTensor())
+    data = dataset[0]
+    node_features = data.x
+    return data.adj_t, node_features
+
+
+
+
 def load_dataset(dataset_name):
     if dataset_name == "Cora":
         return load_cora()
     elif dataset_name == "ogbn-arxiv":
         return load_ogbn_arxiv()
+    elif dataset_name == "roman-empire":
+        return load_roman_empire()
 
 
 def load_dataset_sparse(dataset_name):
@@ -91,4 +126,6 @@ def load_dataset_sparse(dataset_name):
         return load_ogbn_arxiv_sparse()
     elif dataset_name == "ogbl-citation2":
         return load_ogbl_citation2_sparse()
+    elif dataset_name == "roman-empire":
+        return load_roman_empire_sparse()
 
