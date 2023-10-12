@@ -6,13 +6,14 @@ import pickle
 import numpy as np
 import seaborn as sns
 import pandas as pd
+import torch
 from matplotlib import pyplot as plt
 
 
 def create_plot_sns(data, title, filename, x_val, hue_val, distance=False, jaccard=False):
 
     color_dict = {"GATv1": "#FF9933", "GraphSAGE": "#FFFF00", "GIN": "#00FFFF",
-                  "GCN": "#3333FF"}
+                  "GCN": "#3333FF", "DirGATv1": "#FFD39B", "DirGraphSAGE": "#CAFF70", "DirGCN": "#808080"}
 
     light_gray = ".8"
     dark_gray = ".15"
@@ -52,7 +53,7 @@ def create_plot_sns(data, title, filename, x_val, hue_val, distance=False, jacca
 def create_plot_sns_with_acc(gram_data, test_acc_data, title, filename, x_val, hue_val, distance=False, jaccard=False):
 
     color_dict = {"GATv1": "#FF9933", "GraphSAGE": "#FFFF00", "GIN": "#00FFFF",
-                  "GCN": "#3333FF"}
+                  "GCN": "#3333FF", "DirGATv1": "#FFD39B", "DirGraphSAGE": "#CAFF70", "DirGCN": "#808080"}
 
     # light_gray = ".8"
     # dark_gray = ".15"
@@ -81,13 +82,13 @@ def create_plot_sns_with_acc(gram_data, test_acc_data, title, filename, x_val, h
     elif jaccard:
         g.axes[0, 0].set_ylim(0.0, 1.0)
     else:
-        g.axes[0, 0].set_ylim(-1, 1)
+        g.axes[0, 0].set_ylim(-0.2, 0.5)
 
 
     g2 = plt.twinx()
     p2 = sns.scatterplot(data=test_acc_data, x=x_val, y="Test Acc", hue=hue_val, palette=color_dict, legend=False)
     p2.set_ylabel("Test Accuracy", fontsize='17')
-    g2.set_ylim(60, 100)
+    g2.set_ylim(10, 80)
 
     plt.title("")
     plt.savefig("plots/" + filename + ".pdf", bbox_inches="tight")
@@ -201,7 +202,7 @@ if __name__ == '__main__':
                         pkl_path = os.path.join(folder_path, pkl)
                         print(pkl_path)
                         with open(pkl_path, 'rb') as f:
-                            final_accs = pickle.load(f)
+                            final_accs = np.load(f, allow_pickle=True)
                         print('final test accs:  ' + str(final_accs[1].item()))
                         single_model_type_results = np.append(single_model_type_results, final_accs[1].item())
                         print('Current single_model_type_results contains:  ')
@@ -216,4 +217,4 @@ if __name__ == '__main__':
                 print(test_acc_data)
 
         create_plot_sns_with_acc(pd.concat(gram_data), pd.concat(test_acc_data), "Graph Gram Index", filename=f'{dataset}_gram', x_val='Model', hue_val='Model',
-                        distance=False, jaccard=True)
+                        distance=False, jaccard=False)

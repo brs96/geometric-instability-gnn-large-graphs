@@ -24,6 +24,8 @@ class GGI:
             self.chunk_node_count = 2708
         elif (NUM_NODES == 2927963): # ogbl-citation2
             self.chunk_node_count = 5000  # 585+1 chunks
+        elif (NUM_NODES == 22662): # roman-empire
+            self.chunk_node_count = 3000  # 8 chunks
 
     def compute_ggi(self, adj, embeddings, device):
         ggi_list = []

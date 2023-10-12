@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from ogb.nodeproppred import Evaluator
 from torch import optim
 from log_embeddings_and_predictions import update_stats, save_training_info, save_final_results, save_predictions
-
+from torcheval.metrics.functional import multiclass_f1_score
 
 def train_gnn(DATASET, X, edge_indices, y, mask, model, optimiser, device):
     model.train()
@@ -83,7 +83,7 @@ def evaluate_gnn(X, edge_indices, y, mask, model, num_classes, device):
     total_per_class = torch.bincount(y.data)
     per_class_accuracy = torch.div(per_class_counts, total_per_class)
 
-    return accuracy, per_class_accuracy, node_embeddings, y_out
+    return accuracy, per_class_accuracy, node_embeddings, y_hat
 
 def evaluate_ogbn_proteins(X, edge_indices, y, mask, model):
     y_out, node_embeddings = model(X, edge_indices)
@@ -131,9 +131,11 @@ def train_eval_loop_gnn(MODEL, DATASET, model, epochs, edge_indices, train_x, tr
     if DATASET != 'ogbn-proteins':
         test_acc, test_class_acc, test_node_embeddings, test_y_hat = evaluate_gnn(test_x, edge_indices, test_y, test_mask, model,
                                                                  num_classes, device)
+        multiclass_f1 = multiclass_f1_score(test_y, test_y_hat, num_classes=num_classes, average=None)
         print(f"Test node embeddings shape is: {test_node_embeddings.shape}")
         print(f"Our final test accuracy for model {MODEL} is: {test_acc:.3f}")
         print("Final per class accuracy on test set: ", test_class_acc)
+        print("Final multiclass f1 score per class on test set: ", multiclass_f1)
     else:
         test_node_embeddings, rocauc, test_y_hat = evaluate_ogbn_proteins(test_x, edge_indices, test_y, test_mask, model)
 
@@ -143,6 +145,7 @@ def train_eval_loop_gnn(MODEL, DATASET, model, epochs, edge_indices, train_x, tr
     # Save final results
     if DATASET != 'ogbn-proteins':
         final_results_list = [seed, test_acc, test_class_acc, train_class_acc, valid_class_acc]
+        # final_results_list = [seed, test_acc, test_class_acc, train_class_acc, valid_class_acc, multiclass_f1]
     else:
         final_results_list = [seed, rocauc, 0, 0, 0]
 
