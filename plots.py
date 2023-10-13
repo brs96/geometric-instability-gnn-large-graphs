@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import pickle
+import io
 
 import numpy as np
 import seaborn as sns
@@ -82,16 +83,26 @@ def create_plot_sns_with_acc(gram_data, test_acc_data, title, filename, x_val, h
     elif jaccard:
         g.axes[0, 0].set_ylim(0.0, 1.0)
     else:
-        g.axes[0, 0].set_ylim(-0.2, 0.5)
+        g.axes[0, 0].set_ylim(0.0, 1.0)
 
 
     g2 = plt.twinx()
     p2 = sns.scatterplot(data=test_acc_data, x=x_val, y="Test Acc", hue=hue_val, palette=color_dict, legend=False)
     p2.set_ylabel("Test Accuracy", fontsize='17')
-    g2.set_ylim(10, 80)
+    g2.set_ylim(40, 80)
 
     plt.title("")
     plt.savefig("plots/" + filename + ".pdf", bbox_inches="tight")
+
+
+class CPU_Unpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else:
+            return super().find_class(module, name)
+
+
 
 
 if __name__ == '__main__':
@@ -164,7 +175,7 @@ if __name__ == '__main__':
         for filename in os.listdir('model_results'):
             model_type = filename.split('_')[0]
             if re.search(f'_{args.dataset}', filename):
-                file_path = os.path.join('model_results', filename, 'analysis', 'normalized_centered_ggi.csv')
+                file_path = os.path.join('model_results', filename, 'analysis', 'normalized_centered_cga.csv')
                 print(f'File path is: {file_path}')
 
                 max_num_columns = 0
@@ -202,7 +213,8 @@ if __name__ == '__main__':
                         pkl_path = os.path.join(folder_path, pkl)
                         print(pkl_path)
                         with open(pkl_path, 'rb') as f:
-                            final_accs = np.load(f, allow_pickle=True)
+                            #final_accs = np.load(f, allow_pickle=True)
+                            final_accs = CPU_Unpickler(f).load()
                         print('final test accs:  ' + str(final_accs[1].item()))
                         single_model_type_results = np.append(single_model_type_results, final_accs[1].item())
                         print('Current single_model_type_results contains:  ')
@@ -215,6 +227,10 @@ if __name__ == '__main__':
                 test_acc_data.append(data)
                 print('Current all_data contains:  ')
                 print(test_acc_data)
+
+        custom_order = ['GATv1', 'GraphSAGE', 'GCN', 'GIN', 'DirGATv1', 'DirGraphSAGE', 'DirGCN']
+        gram_data = sorted(gram_data, key=lambda df: [custom_order.index(val) for val in df['Model']])
+        test_acc_data = sorted(test_acc_data, key=lambda df: [custom_order.index(val) for val in df['Model']])
 
         create_plot_sns_with_acc(pd.concat(gram_data), pd.concat(test_acc_data), "Graph Gram Index", filename=f'{dataset}_gram', x_val='Model', hue_val='Model',
                         distance=False, jaccard=False)
