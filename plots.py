@@ -142,6 +142,10 @@ if __name__ == '__main__':
 
                 all_data.append(data)
 
+        custom_order = ['GATv1', 'GraphSAGE', 'GCN', 'GIN', 'DirGATv1', 'DirGraphSAGE', 'DirGCN']
+        all_data = sorted(all_data, key=lambda df: [custom_order.index(val) for val in df['Model']])
+    
+
         create_plot_sns(pd.concat(all_data), "20-NN-Jaccard", filename='jaccard', x_val='Dataset', hue_val='Model',
                         distance=False, jaccard=True)
 
