@@ -44,7 +44,7 @@ def create_plot_sns(data, title, filename, x_val, hue_val, distance=False, jacca
     elif jaccard:
         g.axes[0, 0].set_ylim(0.0, 1.0)
     else:
-        g.axes[0, 0].set_ylim(-1, 1)
+        g.axes[0, 0].set_ylim(0.0, 1.0)
 
     g.set_titles("")
     g.savefig("plots/" + filename + ".pdf", bbox_inches="tight")
@@ -83,13 +83,13 @@ def create_plot_sns_with_acc(gram_data, test_acc_data, title, filename, x_val, h
     elif jaccard:
         g.axes[0, 0].set_ylim(0.0, 1.0)
     else:
-        g.axes[0, 0].set_ylim(0.0, 1.0)
+        g.axes[0, 0].set_ylim(-0.2, 0.8)
 
 
     g2 = plt.twinx()
     p2 = sns.scatterplot(data=test_acc_data, x=x_val, y="Test Acc", hue=hue_val, palette=color_dict, legend=False)
     p2.set_ylabel("Test Accuracy", fontsize='17')
-    g2.set_ylim(40, 80)
+    g2.set_ylim(0, 100)
 
     plt.title("")
     plt.savefig("plots/" + filename + ".pdf", bbox_inches="tight")
@@ -175,7 +175,7 @@ if __name__ == '__main__':
         for filename in os.listdir('model_results'):
             model_type = filename.split('_')[0]
             if re.search(f'_{args.dataset}', filename):
-                file_path = os.path.join('model_results', filename, 'analysis', 'normalized_centered_cga.csv')
+                file_path = os.path.join('model_results', filename, 'analysis', 'normalized_centered_ggi.csv')
                 print(f'File path is: {file_path}')
 
                 max_num_columns = 0
